@@ -5,17 +5,152 @@
   <title>我的網站</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    /* 這裡可以加入你的 CSS 樣式 */
     body {
       font-family: Arial, sans-serif;
       margin: 0;
-      padding: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    canvas {
+      border: 1px solid #333;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
-  <!-- 這裡可以寫你的內容 -->
   <h1>歡迎來到我的網站</h1>
-  <p>這是一個空白的 HTML 範本。</p>
+  <p>這是一個五子棋隨機對弈模擬器</p>
+
+  <script>
+    // JavaScript 模擬隨機五子棋對弈
+    const canvas = document.createElement('canvas');
+    canvas.width = 450;
+    canvas.height = 450;
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+
+    const boardSize = 9;
+    const cellSize = canvas.width / boardSize;
+
+    let black = [];
+    let white = [];
+    let usedPositions = new Set();
+
+    function drawBoard() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = 'black';
+
+      for (let i = 0; i < boardSize; i++) {
+        ctx.beginPath();
+        ctx.moveTo(cellSize / 2, cellSize / 2 + i * cellSize);
+        ctx.lineTo(canvas.width - cellSize / 2, cellSize / 2 + i * cellSize);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(cellSize / 2 + i * cellSize, cellSize / 2);
+        ctx.lineTo(cellSize / 2 + i * cellSize, canvas.height - cellSize / 2);
+        ctx.stroke();
+      }
+
+      // 畫中心點
+      ctx.beginPath();
+      ctx.arc(cellSize * 4 + cellSize / 2, cellSize * 4 + cellSize / 2, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      drawStones(black, 'black');
+      drawStones(white, 'white');
+    }
+
+    function drawStones(stones, color) {
+      for (const [x, y] of stones) {
+        ctx.beginPath();
+        ctx.arc(y * cellSize + cellSize / 2, x * cellSize + cellSize / 2, cellSize / 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        if (color === 'white') {
+          ctx.strokeStyle = 'black';
+          ctx.stroke();
+        }
+      }
+    }
+
+    function checkWin(stones) {
+      const board = Array.from({ length: 9 }, () => Array(9).fill(0));
+      for (const [x, y] of stones) {
+        board[x][y] = 1;
+      }
+      const directions = [
+        [1, 0], [0, 1], [1, 1], [1, -1]
+      ];
+      for (let x = 0; x < 9; x++) {
+        for (let y = 0; y < 9; y++) {
+          if (board[x][y] === 1) {
+            for (const [dx, dy] of directions) {
+              let count = 1;
+              for (let i = 1; i < 5; i++) {
+                const nx = x + dx * i;
+                const ny = y + dy * i;
+                if (nx >= 0 && nx < 9 && ny >= 0 && ny < 9 && board[nx][ny] === 1) {
+                  count++;
+                } else {
+                  break;
+                }
+              }
+              if (count >= 5) return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
+
+    function playRandomTurn() {
+      const allPositions = [];
+      for (let x = 0; x < 9; x++) {
+        for (let y = 0; y < 9; y++) {
+          allPositions.push([x, y]);
+        }
+      }
+      const available = allPositions.filter(([x, y]) => !usedPositions.has(`${x},${y}`));
+      if (available.length < 2) return false;
+
+      const blackMove = available[Math.floor(Math.random() * available.length)];
+      black.push(blackMove);
+      usedPositions.add(`${blackMove[0]},${blackMove[1]}`);
+      if (checkWin(black)) {
+        drawBoard();
+        console.log('🏆 ⚫ 黑棋勝利！', blackMove);
+        return false;
+      }
+
+      const available2 = allPositions.filter(([x, y]) => !usedPositions.has(`${x},${y}`));
+      if (available2.length === 0) return false;
+
+      const whiteMove = available2[Math.floor(Math.random() * available2.length)];
+      white.push(whiteMove);
+      usedPositions.add(`${whiteMove[0]},${whiteMove[1]}`);
+      if (checkWin(white)) {
+        drawBoard();
+        console.log('🏆 ⚪ 白棋勝利！', whiteMove);
+        return false;
+      }
+
+      drawBoard();
+      console.log('⚫', blackMove, '⚪', whiteMove);
+      return true;
+    }
+
+    function startGame() {
+      const interval = setInterval(() => {
+        if (!playRandomTurn()) {
+          clearInterval(interval);
+          console.log('對弈結束');
+        }
+      }, 500);
+    }
+
+    drawBoard();
+    startGame();
+  </script>
 </body>
 </html>
