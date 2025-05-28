@@ -15,14 +15,27 @@
       border: 1px solid #333;
       margin-top: 20px;
     }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 10px;
+    }
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
   <h1>歡迎來到我的網站</h1>
   <p>這是一個五子棋隨機對弈模擬器</p>
 
+  <!-- 開始與重新開始按鈕 -->
+  <button id="startButton">開始</button>
+  <button id="restartButton">重新開始</button>
+
   <script>
-    // JavaScript 模擬隨機五子棋對弈
     const canvas = document.createElement('canvas');
     canvas.width = 450;
     canvas.height = 450;
@@ -35,6 +48,7 @@
     let black = [];
     let white = [];
     let usedPositions = new Set();
+    let intervalId = null;
 
     function drawBoard() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -141,16 +155,51 @@
     }
 
     function startGame() {
-      const interval = setInterval(() => {
+      if (intervalId !== null) {
+        clearInterval(intervalId);
+      }
+
+      // 清空資料
+      black = [];
+      white = [];
+      usedPositions = new Set();
+      drawBoard();
+
+      // 禁用開始按鈕
+      document.getElementById('startButton').disabled = true;
+
+      intervalId = setInterval(() => {
         if (!playRandomTurn()) {
-          clearInterval(interval);
+          clearInterval(intervalId);
+          intervalId = null;
           console.log('對弈結束');
         }
       }, 500);
     }
 
+    function restartGame() {
+      // 清除現有對弈
+      if (intervalId !== null) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+
+      // 重啟遊戲
+      black = [];
+      white = [];
+      usedPositions = new Set();
+      drawBoard();
+
+      // 啟用開始按鈕
+      document.getElementById('startButton').disabled = false;
+    }
+
+    // 初始化畫面
     drawBoard();
-    startGame();
+
+    // 綁定按鈕事件
+    document.getElementById('startButton').addEventListener('click', startGame);
+    document.getElementById('restartButton').addEventListener('click', restartGame);
   </script>
 </body>
 </html>
